@@ -7,8 +7,8 @@ const AuthContext = createContext(null)
 // own), via is_active_user(). So "signed in but no profile row comes back"
 // is exactly how a deactivated account is blocked — that's enforced by the
 // database, not this check; this just turns it into a message + sign-out.
-async function loadProfile() {
-  const { data, error } = await supabase.from('users').select('*').maybeSingle()
+async function loadProfile(userId) {
+  const { data, error } = await supabase.from('users').select('*').eq('id', userId).maybeSingle()
   if (error) throw error
   return data
 }
@@ -19,8 +19,8 @@ export function AuthProvider({ children }) {
   const [inactive, setInactive] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const refreshProfile = useCallback(async () => {
-    const row = await loadProfile()
+  const refreshProfile = useCallback(async (userId) => {
+    const row = await loadProfile(userId)
     if (!row) {
       setInactive(true)
       setProfile(null)
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (cancelled) return
       setSession(session)
-      if (session) await refreshProfile()
+      if (session) await refreshProfile(session.user.id)
       setLoading(false)
     })
 
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
       if (cancelled) return
       setSession(session)
       if (session) {
-        await refreshProfile()
+        await refreshProfile(session.user.id)
       } else {
         setProfile(null)
       }
