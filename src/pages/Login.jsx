@@ -22,7 +22,10 @@ export default function Login() {
     try {
       await signIn(email, password)
     } catch (err) {
-      setError('Incorrect email or password.')
+      // TEMPORARY: showing the raw Supabase error for live debugging.
+      // Revert to the generic "Incorrect email or password" message once
+      // the sign-in issue is diagnosed — this leaks which part failed.
+      setError(`[debug] ${err.message}`)
     } finally {
       setSubmitting(false)
     }
