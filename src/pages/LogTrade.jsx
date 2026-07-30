@@ -15,6 +15,7 @@ const EMPTY_FORM = {
   take_profit: '',
   size: '',
   pnl: '',
+  breakEven: false,
   account_type: 'sim',
   setup_tag: '',
   followed_plan: null,
@@ -204,6 +205,22 @@ export default function LogTrade() {
               <input id="pnl" type="number" step="any" value={form.pnl} onChange={set('pnl')} />
             </div>
           </TwoCol>
+
+          <label
+            htmlFor="break_even"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, cursor: 'pointer' }}
+          >
+            <input
+              id="break_even"
+              type="checkbox"
+              checked={form.breakEven}
+              onChange={(e) => {
+                const checked = e.target.checked
+                setForm((f) => ({ ...f, breakEven: checked, pnl: checked ? '0' : f.pnl }))
+              }}
+            />
+            <span style={{ fontSize: 14, color: 'var(--text)' }}>Break even</span>
+          </label>
 
           <div className="field">
             <label htmlFor="account_type">Account type</label>

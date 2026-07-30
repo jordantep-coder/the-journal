@@ -7,7 +7,10 @@ export function computeTradeStats(trades) {
   const closed = trades.filter(isClosed)
   const wins = closed.filter((t) => t.pnl > 0)
   const losses = closed.filter((t) => t.pnl < 0)
-  const withR = trades.filter((t) => t.r_multiple !== null && t.r_multiple !== undefined)
+  // Break-even (pnl === 0) trades count toward closedTrades but are excluded
+  // from win/loss entirely — not a win, not a loss, and not diluting either rate.
+  const decided = wins.length + losses.length
+  const withR = trades.filter((t) => t.r_multiple !== null && t.r_multiple !== undefined && t.pnl !== 0)
 
   const grossWin = wins.reduce((s, t) => s + t.pnl, 0)
   const grossLoss = losses.reduce((s, t) => s + t.pnl, 0) // negative
@@ -15,7 +18,7 @@ export function computeTradeStats(trades) {
   return {
     totalTrades: trades.length,
     closedTrades: closed.length,
-    winRate: closed.length ? (wins.length / closed.length) * 100 : null,
+    winRate: decided ? (wins.length / decided) * 100 : null,
     avgR: withR.length ? withR.reduce((s, t) => s + t.r_multiple, 0) / withR.length : null,
     expectancy: closed.length ? closed.reduce((s, t) => s + t.pnl, 0) / closed.length : null,
     profitFactor: grossLoss < 0 ? grossWin / Math.abs(grossLoss) : grossWin > 0 ? Infinity : null,
@@ -92,10 +95,16 @@ export function winRateByEmotion(trades, field = 'emotion_before') {
     byEmotion.get(t[field]).push(t)
   }
   return Array.from(byEmotion.entries())
-    .map(([emotion, group]) => ({
-      emotion,
-      winRate: (group.filter((t) => t.pnl > 0).length / group.length) * 100,
-      count: group.length,
-    }))
+    .map(([emotion, group]) => {
+      // Same break-even exclusion as computeTradeStats: pnl === 0 counts
+      // toward this emotion's trade count but not toward its win rate.
+      const decided = group.filter((t) => t.pnl !== 0)
+      return {
+        emotion,
+        winRate: decided.length ? (decided.filter((t) => t.pnl > 0).length / decided.length) * 100 : null,
+        count: group.length,
+      }
+    })
+    .filter((e) => e.winRate !== null)
     .sort((a, b) => b.winRate - a.winRate)
 }
