@@ -1,7 +1,7 @@
 import { dayKey, formatCompactMoney } from '../lib/format'
 import { computeTradeStats } from '../lib/stats'
 
-const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+const WEEKDAY_LABELS = ['M', 'T', 'W', 'T', 'F']
 
 // win/loss/flat drive the cell's colour wash; a day or week with zero
 // trades gets no entry here at all and renders fully blank (see below).
@@ -11,10 +11,25 @@ function pnlClass(totalPnl) {
   return 'flat'
 }
 
+// Sunday folds into the following Monday (CME futures' Sunday-evening
+// open is conventionally the start of Monday's trading week); Saturday
+// folds into the preceding Friday (a late Friday session can roll past
+// midnight ET into Saturday for timezones far ahead of ET). Clamped so a
+// weekend day at the very edge of the month always folds into a weekday
+// that's still inside the displayed month, rather than a day that would
+// belong to the adjacent month's grid.
+function weekendFoldTarget(day, dow, daysInMonth) {
+  if (dow === 0) return day === daysInMonth ? daysInMonth - 2 : day + 1
+  return day === 1 ? 3 : day - 1
+}
+
 export default function CalendarHeatmap({ year, month, trades, timezone, onPrevMonth, onNextMonth }) {
-  // Bucket raw trades by local calendar day, then hand each bucket to
-  // computeTradeStats so day/week/month totals are all the same reused
-  // aggregation logic rather than three hand-rolled sums.
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const monthLabel = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthStats = computeTradeStats(trades)
+
+  // Raw trades bucketed by actual calendar day (still includes weekends —
+  // this is what weekend-fold merging reads from).
   const tradesByDay = new Map()
   for (const t of trades) {
     const key = dayKey(t.entry_datetime, timezone)
@@ -24,31 +39,42 @@ export default function CalendarHeatmap({ year, month, trades, timezone, onPrevM
     tradesByDay.get(day).push(t)
   }
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const firstWeekday = new Date(year, month, 1).getDay()
-  const monthLabel = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const monthStats = computeTradeStats(trades)
-
-  // Build week rows: each is 7 day-slots (nulls for the leading/trailing
-  // blanks) plus the trades belonging to that row, for the weekly total cell.
-  const weeks = []
-  let currentDays = []
-  let currentTrades = []
-
-  function flushWeek() {
-    while (currentDays.length < 7) currentDays.push(null)
-    weeks.push({ days: currentDays, trades: currentTrades })
-    currentDays = []
-    currentTrades = []
-  }
-
-  for (let i = 0; i < firstWeekday; i++) currentDays.push(null)
+  // Display buckets: weekday day-numbers only, each pre-seeded with its own
+  // trades, then weekend days merged in via the fold rule. This is what
+  // actually renders and what weekly totals sum — so a folded trade counts
+  // toward the weekday cell's total and its week's total, never dropped.
+  const displayTradesByDay = new Map()
   for (let d = 1; d <= daysInMonth; d++) {
-    currentDays.push(d)
-    currentTrades.push(...(tradesByDay.get(d) || []))
-    if (currentDays.length === 7) flushWeek()
+    const dow = new Date(year, month, d).getDay()
+    if (dow >= 1 && dow <= 5) displayTradesByDay.set(d, [...(tradesByDay.get(d) || [])])
   }
-  if (currentDays.length) flushWeek()
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(year, month, d).getDay()
+    if (dow !== 0 && dow !== 6) continue
+    const weekendTrades = tradesByDay.get(d)
+    if (!weekendTrades?.length) continue
+    const target = weekendFoldTarget(d, dow, daysInMonth)
+    displayTradesByDay.get(target).push(...weekendTrades)
+  }
+
+  // Row layout: walk weekdays in order, starting a new row at each Monday
+  // (Mon..Fri columns), so leading/trailing partial weeks land in the
+  // correct columns rather than just chunking every 5 days.
+  const weeks = []
+  let currentRow = new Array(5).fill(null)
+  let rowHasContent = false
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(year, month, d).getDay()
+    if (dow < 1 || dow > 5) continue
+    const col = dow - 1
+    if (col === 0 && rowHasContent) {
+      weeks.push(currentRow)
+      currentRow = new Array(5).fill(null)
+    }
+    currentRow[col] = d
+    rowHasContent = true
+  }
+  if (rowHasContent) weeks.push(currentRow)
 
   return (
     <div className="panel">
@@ -77,24 +103,25 @@ export default function CalendarHeatmap({ year, month, trades, timezone, onPrevM
         ))}
         <div className="calendar-week-header" />
 
-        {weeks.map((week, weekIndex) => (
-          <WeekRow key={weekIndex} week={week} weekIndex={weekIndex} tradesByDay={tradesByDay} />
+        {weeks.map((days, weekIndex) => (
+          <WeekRow key={weekIndex} days={days} weekIndex={weekIndex} displayTradesByDay={displayTradesByDay} />
         ))}
       </div>
     </div>
   )
 }
 
-function WeekRow({ week, weekIndex, tradesByDay }) {
-  const weekStats = computeTradeStats(week.trades)
+function WeekRow({ days, weekIndex, displayTradesByDay }) {
+  const weekTrades = days.flatMap((d) => (d === null ? [] : displayTradesByDay.get(d) || []))
+  const weekStats = computeTradeStats(weekTrades)
 
   return (
     <>
-      {week.days.map((day, i) =>
+      {days.map((day, i) =>
         day === null ? (
           <div key={i} />
         ) : (
-          <DayCell key={i} day={day} dayTrades={tradesByDay.get(day) || []} />
+          <DayCell key={i} day={day} dayTrades={displayTradesByDay.get(day) || []} />
         ),
       )}
       <WeekTotalCell weekNumber={weekIndex + 1} stats={weekStats} />

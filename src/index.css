@@ -261,7 +261,7 @@ button {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr) minmax(72px, 92px);
+  grid-template-columns: repeat(5, 1fr) minmax(72px, 92px);
   gap: 4px;
 }
 
@@ -347,11 +347,11 @@ button {
 }
 
 /* Week column is desktop-only — hidden entirely on narrow screens rather
-   than reflowed, since there's no sane place to put an 8th column at
+   than reflowed, since there's no sane place to put a 6th column at
    phone width. */
 @media (max-width: 640px) {
   .calendar-grid {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 
   .calendar-week-header,
