@@ -3,8 +3,6 @@ import { supabase } from '../lib/supabaseClient'
 import { computeTradeStats, currentStreak, ruleAdherencePct, consistency30d } from '../lib/stats'
 import ScoreboardTable from '../components/ScoreboardTable'
 
-const MENTOR_ORDER = { lead_mentor: 0, mentor: 1 }
-
 export default function Scoreboard() {
   const [rows, setRows] = useState(null) // null = loading
   const [sortBy, setSortBy] = useState('adherence') // 'adherence' | 'pnl'
@@ -46,12 +44,15 @@ export default function Scoreboard() {
     )
   }
 
-  const mentors = rows.filter((r) => r.role === 'mentor').sort((a, b) => MENTOR_ORDER[a.tier] - MENTOR_ORDER[b.tier])
-  const students = rows.filter((r) => r.role === 'student')
-  const vip = students.filter((r) => r.tier !== 'alumni')
-  const alumni = students.filter((r) => r.tier === 'alumni').sort((a, b) => a.display_name.localeCompare(b.display_name))
+  // Mentors are never tier 'alumni', so this naturally includes every
+  // mentor plus every non-alumni student in one ranked set — no role
+  // filter needed.
+  const ranked = rows.filter((r) => r.tier !== 'alumni')
+  const alumni = rows
+    .filter((r) => r.tier === 'alumni')
+    .sort((a, b) => a.display_name.localeCompare(b.display_name))
 
-  const sortedVip = [...vip].sort((a, b) => {
+  const sortedRanked = [...ranked].sort((a, b) => {
     const key = sortBy === 'pnl' ? 'totalPnl' : 'planAdherencePct'
     const av = a[key]
     const bv = b[key]
@@ -63,15 +64,6 @@ export default function Scoreboard() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px 80px' }}>
       <h1>Scoreboard</h1>
-
-      {mentors.length > 0 && (
-        <>
-          <h2 style={{ fontSize: 15, marginTop: 24, marginBottom: 12 }}>Mentors</h2>
-          <div className="panel" style={{ marginBottom: 32 }}>
-            <ScoreboardTable rows={mentors} />
-          </div>
-        </>
-      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 12 }}>
         <h2 style={{ fontSize: 15, margin: 0 }}>Ranked</h2>
@@ -107,7 +99,7 @@ export default function Scoreboard() {
         </div>
       </div>
       <div className="panel" style={{ marginBottom: 32 }}>
-        <ScoreboardTable rows={sortedVip} showRank />
+        <ScoreboardTable rows={sortedRanked} showRank />
       </div>
 
       {alumni.length > 0 && (
