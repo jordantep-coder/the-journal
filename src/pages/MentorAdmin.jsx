@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { ROADMAP_STAGES, STUDENT_TIERS, labelize } from '../lib/enums'
-import { TIER_COLOR } from '../lib/tiers'
+import { nameColor } from '../lib/tiers'
 
 const WEEK_MS = 7 * 24 * 3600 * 1000
 const MONTH_MS = 30 * 24 * 3600 * 1000
@@ -27,7 +27,7 @@ function CreateUserPanel() {
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [tier, setTier] = useState('vip')
-  const [roadmapStage, setRoadmapStage] = useState('foundations')
+  const [roadmapStage, setRoadmapStage] = useState('demo')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -53,7 +53,7 @@ function CreateUserPanel() {
     setEmail('')
     setDisplayName('')
     setTier('vip')
-    setRoadmapStage('foundations')
+    setRoadmapStage('demo')
   }
 
   return (
@@ -177,7 +177,7 @@ function StudentsPanel() {
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id}>
-                    <td style={{ color: TIER_COLOR[r.tier], fontWeight: 700 }}>{r.display_name}</td>
+                    <td style={{ color: nameColor(r), fontWeight: 700 }}>{r.display_name}</td>
                     <td>
                       <select className="mini-input" value={r.tier} onChange={(e) => updateField(r.id, 'tier', e.target.value)}>
                         {STUDENT_TIERS.map((t) => (

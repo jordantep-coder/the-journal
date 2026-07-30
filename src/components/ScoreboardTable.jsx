@@ -1,4 +1,4 @@
-import { TIER_LABEL, TIER_COLOR } from '../lib/tiers'
+import { TIER_LABEL, nameColor } from '../lib/tiers'
 import { formatMoney, formatR } from '../lib/format'
 import { labelize } from '../lib/enums'
 
@@ -30,7 +30,7 @@ export default function ScoreboardTable({ rows, showRank = false }) {
             <tr key={r.id}>
               {showRank && <td>{i + 1}</td>}
               <td>
-                <span style={{ color: TIER_COLOR[r.tier], fontWeight: 700 }}>{r.display_name}</span>{' '}
+                <span style={{ color: nameColor(r), fontWeight: 700 }}>{r.display_name}</span>{' '}
                 <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[r.tier]}</span>
               </td>
               <td style={{ textAlign: 'right', color: 'var(--gold)', fontWeight: 700 }}>

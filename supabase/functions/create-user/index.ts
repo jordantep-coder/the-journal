@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       display_name,
       role: 'student',
       tier,
-      roadmap_stage: roadmap_stage || 'foundations',
+      roadmap_stage: roadmap_stage || 'demo',
       active: true,
     })
 

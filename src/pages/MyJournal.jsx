@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { TIER_LABEL, TIER_COLOR } from '../lib/tiers'
+import { TIER_LABEL, nameColor } from '../lib/tiers'
 import CalendarHeatmap from '../components/CalendarHeatmap'
 import TradeCard from '../components/TradeCard'
 
@@ -74,7 +74,7 @@ export default function MyJournal() {
         <div>
           <h1 style={{ marginBottom: 4 }}>My Journal</h1>
           <p style={{ color: 'var(--muted)', margin: 0 }}>
-            <strong style={{ color: TIER_COLOR[profile.tier], fontFamily: 'var(--font-mono)' }}>
+            <strong style={{ color: nameColor(profile), fontFamily: 'var(--font-mono)' }}>
               {profile.display_name}
             </strong>{' '}
             — {TIER_LABEL[profile.tier]}

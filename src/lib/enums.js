@@ -1,6 +1,6 @@
 export const DIRECTIONS = ['long', 'short']
 
-export const ROADMAP_STAGES = ['foundations', 'strategy', 'prop_setup', 'evaluation', 'funded']
+export const ROADMAP_STAGES = ['demo', 'evaluation', 'funded']
 
 export const STUDENT_TIERS = ['vip', 'alumni']
 

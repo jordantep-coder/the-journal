@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { formatMoney, formatR, formatDateTime } from '../lib/format'
-import { TIER_LABEL, TIER_COLOR } from '../lib/tiers'
+import { TIER_LABEL, nameColor } from '../lib/tiers'
 
 export default function TradeCard({ trade, timezone, owner }) {
   const edgeColor =
@@ -30,7 +30,7 @@ export default function TradeCard({ trade, timezone, owner }) {
       <div>
         {owner && (
           <div style={{ fontSize: 13, marginBottom: 4 }}>
-            <span style={{ color: TIER_COLOR[owner.tier], fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
+            <span style={{ color: nameColor(owner), fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
               {owner.display_name}
             </span>{' '}
             <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[owner.tier]}</span>
