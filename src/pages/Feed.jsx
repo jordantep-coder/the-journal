@@ -56,14 +56,14 @@ export default function Feed() {
 
   return (
     <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 20px 80px' }}>
-      <h1>Everyone</h1>
-      <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>Every student's trades, newest first.</p>
+      <h1>Team Stats</h1>
+      <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 24 }}>Every trade logged by the team, newest first.</p>
 
       <div className="panel" style={{ marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
         <div className="field" style={{ flex: '1 1 140px', marginBottom: 0 }}>
-          <label htmlFor="filter-student">Student</label>
+          <label htmlFor="filter-student">Member</label>
           <select id="filter-student" value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-            <option value="">All students</option>
+            <option value="">All members</option>
             {students.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.display_name}

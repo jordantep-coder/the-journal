@@ -33,7 +33,7 @@ export default function AppNav() {
           My Stats
         </NavLink>
         <NavLink to="/feed" style={({ isActive }) => (isActive ? { ...LINK_STYLE, ...ACTIVE_STYLE } : LINK_STYLE)}>
-          Everyone
+          Team Stats
         </NavLink>
         <NavLink to="/scoreboard" style={({ isActive }) => (isActive ? { ...LINK_STYLE, ...ACTIVE_STYLE } : LINK_STYLE)}>
           Scoreboard
