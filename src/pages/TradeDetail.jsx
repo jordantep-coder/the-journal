@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { formatMoney, formatR, formatDateTime } from '../lib/format'
-import { labelize } from '../lib/enums'
+import { labelize, ACCOUNT_TYPE_LABELS } from '../lib/enums'
 import { RULES } from '../lib/rules'
 import CommentThread from '../components/CommentThread'
 
@@ -82,7 +82,7 @@ export default function TradeDetail() {
         <Row label="P&L" value={formatMoney(trade.pnl)} valueColor={trade.pnl > 0 ? 'var(--green)' : trade.pnl < 0 ? 'var(--red)' : undefined} />
         <Row label="R multiple" value={formatR(trade.r_multiple)} />
         <Row label="Followed plan" value={trade.followed_plan ? 'Yes' : 'No'} valueColor={trade.followed_plan ? 'var(--green)' : 'var(--red)'} />
-        <Row label="Account type" value={labelize(trade.account_type)} />
+        <Row label="Account type" value={ACCOUNT_TYPE_LABELS[trade.account_type]} />
         <Row label="Setup" value={trade.setup_tag || '—'} />
         <Row label="Mistake" value={labelize(trade.mistake_tag)} />
       </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { DIRECTIONS, ACCOUNT_TYPES, MISTAKE_TAGS, EMOTIONS, labelize } from '../lib/enums'
+import { DIRECTIONS, ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS, MISTAKE_TAGS, EMOTIONS, labelize } from '../lib/enums'
 
 const EMPTY_FORM = {
   instrument: 'NQ',
@@ -23,7 +23,6 @@ const EMPTY_FORM = {
   emotion_before: '',
   emotion_during: '',
   emotion_after: '',
-  emotion_notes: '',
   notes: '',
 }
 
@@ -112,7 +111,6 @@ export default function LogTrade() {
       emotion_before: form.emotion_before || null,
       emotion_during: form.emotion_during || null,
       emotion_after: form.emotion_after || null,
-      emotion_notes: form.emotion_notes || null,
       screenshot_url: path,
       notes: form.notes || null,
     }
@@ -141,14 +139,19 @@ export default function LogTrade() {
 
         <div className="panel" style={{ display: 'grid', gap: 0 }}>
           <div className="field">
-            <label htmlFor="instrument">Instrument</label>
-            <select id="instrument" value={form.instrument} onChange={set('instrument')}>
-              {(instruments.length ? instruments.map((i) => i.instrument) : ['NQ']).map((sym) => (
-                <option key={sym} value={sym}>
-                  {sym}
-                </option>
-              ))}
-            </select>
+            <label>Market</label>
+            <div
+              style={{
+                background: 'var(--panel-2)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                padding: '12px 14px',
+                color: 'var(--text)',
+                fontSize: 15,
+              }}
+            >
+              NQ
+            </div>
           </div>
 
           <div className="field">
@@ -227,7 +230,7 @@ export default function LogTrade() {
             <select id="account_type" value={form.account_type} onChange={set('account_type')}>
               {ACCOUNT_TYPES.map((a) => (
                 <option key={a} value={a}>
-                  {labelize(a)}
+                  {ACCOUNT_TYPE_LABELS[a]}
                 </option>
               ))}
             </select>
@@ -254,11 +257,6 @@ export default function LogTrade() {
             <EmotionSelect id="emotion_during" label="Emotion during" value={form.emotion_during} onChange={set('emotion_during')} />
           </TwoCol>
           <EmotionSelect id="emotion_after" label="Emotion after" value={form.emotion_after} onChange={set('emotion_after')} />
-
-          <div className="field">
-            <label htmlFor="emotion_notes">Emotion notes</label>
-            <input id="emotion_notes" type="text" value={form.emotion_notes} onChange={set('emotion_notes')} />
-          </div>
 
           <div className="field">
             <label htmlFor="screenshot">Chart screenshot (required)</label>

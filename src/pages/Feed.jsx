@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { ACCOUNT_TYPES, labelize } from '../lib/enums'
+import { ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS } from '../lib/enums'
 import TradeCard from '../components/TradeCard'
 
 const FEED_LIMIT = 100
@@ -89,7 +89,7 @@ export default function Feed() {
             <option value="">All</option>
             {ACCOUNT_TYPES.map((a) => (
               <option key={a} value={a}>
-                {labelize(a)}
+                {ACCOUNT_TYPE_LABELS[a]}
               </option>
             ))}
           </select>
