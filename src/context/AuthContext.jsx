@@ -74,6 +74,7 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(session && profile),
     signIn,
     signOut,
+    refreshProfile: () => session && refreshProfile(session.user.id),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

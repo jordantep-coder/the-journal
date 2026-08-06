@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { TIER_COLOR, TIER_LABEL } from '../lib/tiers'
@@ -14,7 +15,7 @@ export default function CommentThread({ tradeId }) {
   async function load() {
     const { data, error } = await supabase
       .from('mentor_comments')
-      .select('*, mentor:users(display_name, tier)')
+      .select('*, mentor:users(id, display_name, tier)')
       .eq('trade_id', tradeId)
       .order('created_at', { ascending: true })
     setComments(error ? [] : data || [])
@@ -57,8 +58,10 @@ export default function CommentThread({ tradeId }) {
             {comments.map((c) => (
               <div key={c.id}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                  <span style={{ color: TIER_COLOR[c.mentor.tier], fontWeight: 700, fontSize: 14 }}>{c.mentor.display_name}</span>
-                  <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[c.mentor.tier]}</span>
+                  <Link to={`/profile/${c.mentor.id}`} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, textDecoration: 'none' }}>
+                    <span style={{ color: TIER_COLOR[c.mentor.tier], fontWeight: 700, fontSize: 14 }}>{c.mentor.display_name}</span>
+                    <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[c.mentor.tier]}</span>
+                  </Link>
                   <span style={{ color: 'var(--muted)', fontSize: 12, marginLeft: 'auto', fontFamily: 'var(--font-mono)' }}>
                     {formatDateTime(c.created_at, profile.timezone)}
                   </span>

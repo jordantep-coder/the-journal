@@ -25,7 +25,7 @@ export default function AppNav() {
         THE FREEDOM ELITE
       </span>
 
-      <div style={{ display: 'flex', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         <NavLink to="/" end style={({ isActive }) => (isActive ? { ...LINK_STYLE, ...ACTIVE_STYLE } : LINK_STYLE)}>
           My Journal
         </NavLink>
@@ -46,6 +46,19 @@ export default function AppNav() {
             Admin
           </NavLink>
         )}
+        <NavLink
+          to="/settings"
+          aria-label="Settings"
+          style={({ isActive }) => ({
+            ...(isActive ? { ...LINK_STYLE, ...ACTIVE_STYLE } : LINK_STYLE),
+            fontSize: 21,
+            lineHeight: 1,
+            display: 'inline-flex',
+            alignItems: 'center',
+          })}
+        >
+          ⚙
+        </NavLink>
       </div>
     </nav>
   )

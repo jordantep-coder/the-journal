@@ -3,14 +3,34 @@ import { dayKey } from './format'
 
 const isClosed = (t) => t.pnl !== null && t.pnl !== undefined
 
+// Win rate treats any trade with 0 <= pnl <= this as neutral (neither win
+// nor loss, excluded from both sides of the rate) — separate from `wins`
+// below, which is any pnl > 0 and feeds profitFactor/totalPnl and is
+// deliberately NOT narrowed by this band. Losses have no floor: any
+// pnl < 0 counts as a loss regardless of size.
+const BREAKEVEN_MAX = 100
+
+// r_multiple is only meaningful relative to risk_amount, its basis (pnl /
+// risk_amount — see LogTrade.jsx). Trades logged before that column existed
+// still have a stored r_multiple from the old entry/stop/size formula, so
+// checking r_multiple alone isn't enough — risk_amount is the real gate.
+// Every caller that reads R (here and in TradeCard/TradeDetail) goes
+// through this instead of trade.r_multiple directly.
+export function effectiveR(trade) {
+  return trade.risk_amount === null || trade.risk_amount === undefined ? null : trade.r_multiple
+}
+
 export function computeTradeStats(trades) {
   const closed = trades.filter(isClosed)
   const wins = closed.filter((t) => t.pnl > 0)
   const losses = closed.filter((t) => t.pnl < 0)
-  // Break-even (pnl === 0) trades count toward closedTrades but are excluded
-  // from win/loss entirely — not a win, not a loss, and not diluting either rate.
-  const decided = wins.length + losses.length
-  const withR = trades.filter((t) => t.r_multiple !== null && t.r_multiple !== undefined && t.pnl !== 0)
+  const withR = trades.filter((t) => effectiveR(t) !== null && effectiveR(t) !== undefined && t.pnl !== 0)
+
+  // Separate from `wins` — win rate's numerator excludes the $0–$100
+  // neutral band entirely, but profitFactor/totalPnl below still use the
+  // unfiltered `wins`/`losses` (this is a win-rate-only reclassification).
+  const winRateWins = closed.filter((t) => t.pnl > BREAKEVEN_MAX)
+  const winRateDecided = winRateWins.length + losses.length
 
   const grossWin = wins.reduce((s, t) => s + t.pnl, 0)
   const grossLoss = losses.reduce((s, t) => s + t.pnl, 0) // negative
@@ -18,8 +38,8 @@ export function computeTradeStats(trades) {
   return {
     totalTrades: trades.length,
     closedTrades: closed.length,
-    winRate: decided ? (wins.length / decided) * 100 : null,
-    avgR: withR.length ? withR.reduce((s, t) => s + t.r_multiple, 0) / withR.length : null,
+    winRate: winRateDecided ? (winRateWins.length / winRateDecided) * 100 : null,
+    avgR: withR.length ? withR.reduce((s, t) => s + effectiveR(t), 0) / withR.length : null,
     expectancy: closed.length ? closed.reduce((s, t) => s + t.pnl, 0) / closed.length : null,
     profitFactor: grossLoss < 0 ? grossWin / Math.abs(grossLoss) : grossWin > 0 ? Infinity : null,
     totalPnl: closed.length ? grossWin + grossLoss : null,
@@ -96,12 +116,14 @@ export function winRateByEmotion(trades, field = 'emotion_before') {
   }
   return Array.from(byEmotion.entries())
     .map(([emotion, group]) => {
-      // Same break-even exclusion as computeTradeStats: pnl === 0 counts
-      // toward this emotion's trade count but not toward its win rate.
-      const decided = group.filter((t) => t.pnl !== 0)
+      // Same $0–$100 neutral band as computeTradeStats' win rate — those
+      // trades count toward this emotion's total but not toward its win rate.
+      const wins = group.filter((t) => t.pnl > BREAKEVEN_MAX)
+      const losses = group.filter((t) => t.pnl < 0)
+      const decided = wins.length + losses.length
       return {
         emotion,
-        winRate: decided.length ? (decided.filter((t) => t.pnl > 0).length / decided.length) * 100 : null,
+        winRate: decided ? (wins.length / decided) * 100 : null,
         count: group.length,
       }
     })

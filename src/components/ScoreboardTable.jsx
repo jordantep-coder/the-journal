@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom'
 import { TIER_LABEL, nameColor } from '../lib/tiers'
 import { formatMoney, formatR } from '../lib/format'
 import { labelize } from '../lib/enums'
+import Avatar from './Avatar'
 
 export default function ScoreboardTable({ rows, showRank = false }) {
   if (rows.length === 0) {
@@ -30,8 +32,13 @@ export default function ScoreboardTable({ rows, showRank = false }) {
             <tr key={r.id}>
               {showRank && <td>{i + 1}</td>}
               <td>
-                <span style={{ color: nameColor(r), fontWeight: 700 }}>{r.display_name}</span>{' '}
-                <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[r.tier]}</span>
+                <Link to={`/profile/${r.id}`} style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                  <Avatar url={r.avatar_url} name={r.display_name} size={22} color={nameColor(r)} />
+                  <span>
+                    <span style={{ color: nameColor(r), fontWeight: 700 }}>{r.display_name}</span>{' '}
+                    <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[r.tier]}</span>
+                  </span>
+                </Link>
               </td>
               <td style={{ textAlign: 'right', color: 'var(--gold)', fontWeight: 700 }}>
                 {r.planAdherencePct === null ? '—' : `${r.planAdherencePct.toFixed(0)}%`}

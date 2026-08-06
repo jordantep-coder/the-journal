@@ -7,10 +7,12 @@ import LogTrade from './pages/LogTrade'
 import TradeDetail from './pages/TradeDetail'
 import Rules from './pages/Rules'
 import MyStats from './pages/MyStats'
+import UserStats from './pages/UserStats'
 import Feed from './pages/Feed'
 import Scoreboard from './pages/Scoreboard'
 import MentorAdmin from './pages/MentorAdmin'
 import SetPassword from './pages/SetPassword'
+import Settings from './pages/Settings'
 
 // An invite or password-recovery link lands back here with #access_token=...
 // &type=invite in the hash (Supabase's default, detected automatically by
@@ -76,6 +78,14 @@ export default function App() {
             }
           />
           <Route
+            path="/profile/:id"
+            element={
+              <ProtectedRoute>
+                <UserStats />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/feed"
             element={
               <ProtectedRoute>
@@ -88,6 +98,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Scoreboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

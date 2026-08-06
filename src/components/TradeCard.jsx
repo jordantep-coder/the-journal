@@ -1,8 +1,11 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { formatMoney, formatR, formatDateTime } from '../lib/format'
+import { effectiveR } from '../lib/stats'
 import { TIER_LABEL, nameColor } from '../lib/tiers'
+import Avatar from './Avatar'
 
 export default function TradeCard({ trade, timezone, owner }) {
+  const navigate = useNavigate()
   const edgeColor =
     trade.rule_breaches?.length > 0
       ? 'var(--amber)'
@@ -13,8 +16,11 @@ export default function TradeCard({ trade, timezone, owner }) {
           : 'var(--border)'
 
   return (
-    <Link
-      to={`/trades/${trade.id}`}
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(`/trades/${trade.id}`)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/trades/${trade.id}`)}
       className="panel"
       style={{
         display: 'flex',
@@ -25,16 +31,22 @@ export default function TradeCard({ trade, timezone, owner }) {
         borderLeft: `3px solid ${edgeColor}`,
         textDecoration: 'none',
         color: 'inherit',
+        cursor: 'pointer',
       }}
     >
       <div>
         {owner && (
-          <div style={{ fontSize: 13, marginBottom: 4 }}>
+          <Link
+            to={`/profile/${owner.id}`}
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, marginBottom: 4, width: 'fit-content', textDecoration: 'none' }}
+          >
+            <Avatar url={owner.avatar_url} name={owner.display_name} size={18} color={nameColor(owner)} />
             <span style={{ color: nameColor(owner), fontFamily: 'var(--font-mono)', fontWeight: 700 }}>
               {owner.display_name}
             </span>{' '}
             <span style={{ color: 'var(--muted)', fontSize: 11 }}>{TIER_LABEL[owner.tier]}</span>
-          </div>
+          </Link>
         )}
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14 }}>
           {trade.instrument} · {trade.direction === 'long' ? 'Long' : 'Short'}
@@ -48,8 +60,8 @@ export default function TradeCard({ trade, timezone, owner }) {
         <div style={{ color: trade.pnl > 0 ? 'var(--green)' : trade.pnl < 0 ? 'var(--red)' : 'var(--text)' }}>
           {formatMoney(trade.pnl)}
         </div>
-        <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 2 }}>{formatR(trade.r_multiple)}</div>
+        <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 2 }}>{formatR(effectiveR(trade))}</div>
       </div>
-    </Link>
+    </div>
   )
 }

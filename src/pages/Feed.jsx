@@ -34,7 +34,7 @@ export default function Feed() {
   useEffect(() => {
     let query = supabase
       .from('trades')
-      .select('*, owner:users(display_name, tier, timezone, role, roadmap_stage)')
+      .select('*, owner:users(id, display_name, avatar_url, tier, timezone, role, roadmap_stage)')
       .order('entry_datetime', { ascending: false })
       .limit(FEED_LIMIT)
 

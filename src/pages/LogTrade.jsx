@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   stop_loss: '',
   take_profit: '',
   size: '',
+  risk_amount: '',
   pnl: '',
   breakEven: false,
   account_type: 'sim',
@@ -32,31 +33,23 @@ function toNumberOrNull(value) {
   return Number.isFinite(n) ? n : null
 }
 
-function computeRMultiple({ pnl, entry_price, stop_loss, size, pointValue }) {
-  if (pnl === null || entry_price === null || stop_loss === null || size === null || !pointValue) return null
-  const risk = Math.abs(entry_price - stop_loss)
-  if (risk === 0 || size === 0) return null
-  return pnl / (risk * size * pointValue)
+// R is the dollar P&L relative to the dollar amount actually risked, as
+// entered by the trader — not derived from entry/stop/size, since that
+// silently drifts from what someone really risked (see stats.js). Null
+// risk_amount (all pre-migration trades) means null R, not a guess.
+function computeRMultiple({ pnl, risk_amount }) {
+  if (pnl === null || risk_amount === null || risk_amount === 0) return null
+  return pnl / risk_amount
 }
 
 export default function LogTrade() {
   const { profile } = useAuth()
   const navigate = useNavigate()
 
-  const [instruments, setInstruments] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [screenshot, setScreenshot] = useState(null)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-
-  useEffect(() => {
-    supabase
-      .from('instrument_point_values')
-      .select('instrument, point_value')
-      .then(({ data, error }) => {
-        if (!error && data) setInstruments(data)
-      })
-  }, [])
 
   function set(field) {
     return (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
@@ -85,10 +78,10 @@ export default function LogTrade() {
       return
     }
 
-    const pointValue = instruments.find((i) => i.instrument === form.instrument)?.point_value ?? null
     const entry_price = toNumberOrNull(form.entry_price)
     const stop_loss = toNumberOrNull(form.stop_loss)
     const size = toNumberOrNull(form.size)
+    const risk_amount = toNumberOrNull(form.risk_amount)
     const pnl = toNumberOrNull(form.pnl)
 
     const payload = {
@@ -102,8 +95,9 @@ export default function LogTrade() {
       stop_loss,
       take_profit: toNumberOrNull(form.take_profit),
       size,
+      risk_amount,
       pnl,
-      r_multiple: computeRMultiple({ pnl, entry_price, stop_loss, size, pointValue }),
+      r_multiple: computeRMultiple({ pnl, risk_amount }),
       account_type: form.account_type,
       setup_tag: form.setup_tag || null,
       followed_plan: form.followed_plan,
@@ -204,10 +198,15 @@ export default function LogTrade() {
               <input id="size" type="number" min="1" step="1" required value={form.size} onChange={set('size')} />
             </div>
             <div className="field">
-              <label htmlFor="pnl">P&amp;L</label>
-              <input id="pnl" type="number" step="any" value={form.pnl} onChange={set('pnl')} />
+              <label htmlFor="risk_amount">Risk ($)</label>
+              <input id="risk_amount" type="number" min="0.01" step="any" required value={form.risk_amount} onChange={set('risk_amount')} />
             </div>
           </TwoCol>
+
+          <div className="field">
+            <label htmlFor="pnl">P&amp;L</label>
+            <input id="pnl" type="number" step="any" value={form.pnl} onChange={set('pnl')} />
+          </div>
 
           <label
             htmlFor="break_even"

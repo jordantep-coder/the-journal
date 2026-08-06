@@ -23,7 +23,7 @@ function weekendFoldTarget(day, dow, daysInMonth) {
   return day === 1 ? 3 : day - 1
 }
 
-export default function CalendarHeatmap({ year, month, trades, timezone, onPrevMonth, onNextMonth }) {
+export default function CalendarHeatmap({ year, month, trades, timezone, onPrevMonth, onNextMonth, onDayClick }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const monthLabel = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   const monthStats = computeTradeStats(trades)
@@ -104,14 +104,14 @@ export default function CalendarHeatmap({ year, month, trades, timezone, onPrevM
         <div className="calendar-week-header" />
 
         {weeks.map((days, weekIndex) => (
-          <WeekRow key={weekIndex} days={days} weekIndex={weekIndex} displayTradesByDay={displayTradesByDay} />
+          <WeekRow key={weekIndex} days={days} weekIndex={weekIndex} displayTradesByDay={displayTradesByDay} onDayClick={onDayClick} />
         ))}
       </div>
     </div>
   )
 }
 
-function WeekRow({ days, weekIndex, displayTradesByDay }) {
+function WeekRow({ days, weekIndex, displayTradesByDay, onDayClick }) {
   const weekTrades = days.flatMap((d) => (d === null ? [] : displayTradesByDay.get(d) || []))
   const weekStats = computeTradeStats(weekTrades)
 
@@ -121,7 +121,7 @@ function WeekRow({ days, weekIndex, displayTradesByDay }) {
         day === null ? (
           <div key={i} />
         ) : (
-          <DayCell key={i} day={day} dayTrades={displayTradesByDay.get(day) || []} />
+          <DayCell key={i} day={day} dayTrades={displayTradesByDay.get(day) || []} onDayClick={onDayClick} />
         ),
       )}
       <WeekTotalCell weekNumber={weekIndex + 1} stats={weekStats} />
@@ -129,12 +129,19 @@ function WeekRow({ days, weekIndex, displayTradesByDay }) {
   )
 }
 
-function DayCell({ day, dayTrades }) {
+function DayCell({ day, dayTrades, onDayClick }) {
   const stats = computeTradeStats(dayTrades)
   const hasTrades = stats.totalTrades > 0
 
   return (
-    <div className={`calendar-cell ${hasTrades ? pnlClass(stats.totalPnl) : ''}`}>
+    <div
+      className={`calendar-cell ${hasTrades ? pnlClass(stats.totalPnl) : ''}`}
+      onClick={hasTrades ? () => onDayClick(day, dayTrades) : undefined}
+      role={hasTrades ? 'button' : undefined}
+      tabIndex={hasTrades ? 0 : undefined}
+      onKeyDown={hasTrades ? (e) => (e.key === 'Enter' || e.key === ' ') && onDayClick(day, dayTrades) : undefined}
+      style={hasTrades ? { cursor: 'pointer' } : undefined}
+    >
       <div className="date-num">{day}</div>
       {hasTrades && (
         <>
